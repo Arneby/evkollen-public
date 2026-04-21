@@ -1,0 +1,8 @@
+services:
+  scraper:
+    image: ghcr.io/arneby/evkollen-public-scraper:latest
+    pull_policy: always
+    restart: "no"
+    environment:
+      WORKER_URL: ${WORKER_URL}
+      WORKER_SECRET: ${WORKER_SECRET}

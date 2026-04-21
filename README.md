@@ -1,2 +1,1 @@
-# evkollen-public
-Repo for public version of evkollen
+En liten prisskrapare för utvalda bilmodeller på utvalda marknadsplatser.
