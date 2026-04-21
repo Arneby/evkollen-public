@@ -28,6 +28,11 @@ models:
         filter:
           include: ["Recharge", "Pure Electric", "elettric"]
           exclude: ["Core", "B3", "B4", "B5", "D3", "D4", "Mild", "ibrido"]
+      coches_net:
+        make_id: 48
+        model_id: 1544
+        filter:
+          exclude: ["Core"]
       autoscout:
         make_slug: "volvo"
         model_slug: "ex40"

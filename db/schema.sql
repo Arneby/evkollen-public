@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS models (
   id          TEXT PRIMARY KEY,
   make        TEXT NOT NULL,
   model       TEXT NOT NULL,
-  powertrain  TEXT NOT NULL  -- 'bev' | 'phev'
+  powertrain  TEXT NOT NULL,  -- 'bev' | 'phev'
+  label       TEXT
 );
 
 CREATE TABLE IF NOT EXISTS listings (
@@ -16,8 +17,10 @@ CREATE TABLE IF NOT EXISTS listings (
   version         TEXT,              -- trim/variant as shown in ad
   year            INTEGER,
   km              INTEGER,
-  price           INTEGER,           -- EUR kontantpris
-  price_financed  INTEGER,           -- EUR finansierat pris
+  price           INTEGER,
+  price_financed  INTEGER,
+  price_eur       INTEGER,
+  currency        TEXT DEFAULT 'EUR',
   image_url       TEXT,
   province        TEXT,
   dealer_name     TEXT,
@@ -31,8 +34,10 @@ CREATE TABLE IF NOT EXISTS price_snapshots (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   listing_id  TEXT NOT NULL REFERENCES listings(id),
   price       INTEGER NOT NULL,
+  price_eur   INTEGER,
   km          INTEGER,
-  scraped_at  TEXT NOT NULL          -- ISO datetime
+  currency    TEXT DEFAULT 'EUR',
+  scraped_at  TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_listings_model    ON listings(model_id);

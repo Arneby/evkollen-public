@@ -71,47 +71,59 @@ async function handleIngest(request, env) {
     return Response.json({ error: 'listings must be an array' }, { status: 400 });
   }
 
-  if (Array.isArray(models)) {
-    for (const m of models) {
-      await env.DB.prepare(
-        'INSERT OR REPLACE INTO models (id, make, model, powertrain, label) VALUES (?, ?, ?, ?, ?)'
-      ).bind(m.id, m.make, m.model, m.powertrain, m.label ?? null).run();
-    }
-  }
-
-  let inserted = 0;
-  let updated = 0;
   const now = new Date().toISOString();
   const today = now.split('T')[0];
 
-  for (const l of listings) {
-    const existing = await env.DB.prepare(
-      'SELECT id FROM listings WHERE source = ? AND url = ?'
-    ).bind(l.source, l.url).first();
+  if (Array.isArray(models) && models.length > 0) {
+    await env.DB.batch(
+      models.map(m =>
+        env.DB.prepare(
+          'INSERT OR REPLACE INTO models (id, make, model, powertrain, label) VALUES (?, ?, ?, ?, ?)'
+        ).bind(m.id, m.make, m.model, m.powertrain, m.label ?? null)
+      )
+    );
+  }
 
-    if (!existing) {
-      await env.DB.prepare(
-        'INSERT OR IGNORE INTO listings (id, model_id, source, url, title, version, year, km, price, price_financed, price_eur, currency, image_url, province, dealer_name, is_professional, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(
+  if (listings.length === 0) {
+    return Response.json({ inserted: 0, updated: 0 }, { headers: CORS });
+  }
+
+  const listingResults = await env.DB.batch(
+    listings.map(l =>
+      env.DB.prepare(`
+        INSERT INTO listings (id, model_id, source, url, title, version, year, km, price, price_financed, price_eur, currency, image_url, province, dealer_name, is_professional, first_seen, last_seen)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(source, url) DO UPDATE SET
+          last_seen = excluded.last_seen,
+          km = excluded.km,
+          price = excluded.price,
+          price_financed = excluded.price_financed,
+          price_eur = excluded.price_eur,
+          image_url = excluded.image_url,
+          title = excluded.title,
+          version = excluded.version
+      `).bind(
         l.id, l.model_id, l.source, l.url, l.title ?? null, l.version ?? null,
-        l.year ?? null, l.km ?? null, l.price ?? null, l.price_financed ?? null, l.price_eur ?? null, l.currency ?? 'EUR', l.image_url ?? null,
-        l.province ?? null, l.dealer_name ?? null,
+        l.year ?? null, l.km ?? null, l.price ?? null, l.price_financed ?? null,
+        l.price_eur ?? null, l.currency ?? 'EUR',
+        l.image_url ?? null, l.province ?? null, l.dealer_name ?? null,
         l.is_professional ?? 1, today, today
-      ).run();
-      inserted++;
-    } else {
-      await env.DB.prepare(
-        'UPDATE listings SET last_seen = ?, km = ?, price = ?, price_financed = ?, price_eur = ?, image_url = ?, title = ?, version = ? WHERE id = ?'
-      ).bind(today, l.km ?? null, l.price ?? null, l.price_financed ?? null, l.price_eur ?? null, l.image_url ?? null, l.title ?? null, l.version ?? null, existing.id).run();
-      updated++;
-    }
+      )
+    )
+  );
 
-    if (l.price) {
-      const listingId = existing ? existing.id : l.id;
-      await env.DB.prepare(
-        'INSERT INTO price_snapshots (listing_id, price, price_eur, km, currency, scraped_at) VALUES (?, ?, ?, ?, ?, ?)'
-      ).bind(listingId, l.price, l.price_eur ?? null, l.km ?? null, l.currency ?? 'EUR', now).run();
-    }
+  const inserted = listingResults.filter(r => r.meta.last_row_id > 0).length;
+  const updated = listings.length - inserted;
+
+  const withPrice = listings.filter(l => l.price);
+  if (withPrice.length > 0) {
+    await env.DB.batch(
+      withPrice.map(l =>
+        env.DB.prepare(
+          'INSERT INTO price_snapshots (listing_id, price, price_eur, km, currency, scraped_at) VALUES (?, ?, ?, ?, ?, ?)'
+        ).bind(l.id, l.price, l.price_eur ?? null, l.km ?? null, l.currency ?? 'EUR', now)
+      )
+    );
   }
 
   return Response.json({ inserted, updated }, { headers: CORS });
