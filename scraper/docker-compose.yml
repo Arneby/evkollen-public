@@ -4,5 +4,5 @@ services:
     pull_policy: always
     restart: "no"
     environment:
-      WORKER_URL: ${WORKER_URL}
-      WORKER_SECRET: ${WORKER_SECRET}
+      WORKER_URL: https://evkollen-public-worker.gurka.workers.dev
+      WORKER_SECRET: evkollen2026
