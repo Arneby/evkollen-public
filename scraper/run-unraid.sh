@@ -6,6 +6,7 @@
 IMAGE="ghcr.io/arneby/evkollen-public-scraper:latest"
 LOG="/mnt/user/appdata/evkollen-public/scraper.log"
 WORKER_URL="https://evkollen-public-worker.gurka.workers.dev"
+WORKER_SECRET="evkollen2026"
 
 mkdir -p "$(dirname "$LOG")"
 
