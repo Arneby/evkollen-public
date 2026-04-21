@@ -1,1 +1,36 @@
-models: []
+models:
+  - id: volvo-ex40-bev
+    make: Volvo
+    model: EX40
+    variant: ""
+    label: "Volvo EX40"
+    powertrain: bev
+    year_from: 2024
+    year_to: 2026
+    sources:
+      wayke:
+        manufacturer: "Volvo"
+        model_series: "EX40"
+        fuel_type: "El"
+        mileage_max: 10000
+        filter:
+          exclude: ["Core"]
+      bytbil:
+        make: "Volvo"
+        model: "EX40"
+        fuel_type: "El"
+        mileage_max: 10000
+        filter:
+          exclude: ["Core"]
+      subito:
+        make_slug: "volvo"
+        model_slug: "xc40"
+        filter:
+          include: ["Recharge", "Pure Electric", "elettric"]
+          exclude: ["Core", "B3", "B4", "B5", "D3", "D4", "Mild", "ibrido"]
+      autoscout:
+        make_slug: "volvo"
+        model_slug: "ex40"
+        fuel_type: "E"
+        filter:
+          exclude: ["Core"]
